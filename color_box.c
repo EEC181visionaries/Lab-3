@@ -44,7 +44,7 @@ int main(void)
 {
 	/* create a message to be displayed on the VGA and LCD displays */
 	char text_top_row[50] = "Hello World/0";
-	char text_bottom_row[50] = "My Name is Foo! My Favorite Class is ECE181./0");
+	char text_bottom_row[50] = "My Name is Foo! My Favorite Class is ECE181./0";
 
 	/* output text message in the middle of the VGA monitor */
 	VGA_text (35, 29, text_top_row);
