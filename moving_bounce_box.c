@@ -29,6 +29,8 @@ void VGA_bounce(int x_start, int x_end, int y_start, int y_end, char * text_ptr)
 	int x_move = 1;
 	int y_move = 1;
 	int i=0;
+	int j = 0;
+	char orig_char[50];
 	
 
 	// VGA char_buffer_slave location address - Base address is 0x04004000 in Qsys
@@ -36,6 +38,7 @@ void VGA_bounce(int x_start, int x_end, int y_start, int y_end, char * text_ptr)
 	ptr_start = text_ptr;
 	while(1)
 	{
+		j = 0;
 		text_ptr = ptr_start;
 		if (x == x_start || x == x_end)
 			x_move = -x_move;
@@ -46,20 +49,24 @@ void VGA_bounce(int x_start, int x_end, int y_start, int y_end, char * text_ptr)
 		offset = (y << 7) + x;
 		while ( *(text_ptr) )
 		{
+			orig_char[j] = *(character_buffer + offset);
 			*(character_buffer + offset) = *(text_ptr);
 			text_ptr++;
 			offset++;
+			j++;
 		} // while
 		for (i = 0; i< 500000; i++)
 		{
 		}
 		text_ptr = ptr_start;
 		offset = (y << 7) + x;
+		j = 0;
 		while ( *(text_ptr) )
 		{
-			*(character_buffer + offset) = 0;
+			*(character_buffer + offset) = orig_char[j];
 			text_ptr++;
 			offset++;
+			j++;
 		} // while
 	}	// while(1)
 }	// VGA_bounce
