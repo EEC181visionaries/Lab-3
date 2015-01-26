@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 // Function to send a string of text to the VGA monitor
 void VGA_text(int x, int y, char * text_ptr)
 {
@@ -11,8 +13,8 @@ void VGA_text(int x, int y, char * text_ptr)
 	while ( *(text_ptr) )
 	{
 		*(character_buffer + offset) = *(text_ptr);
-		++text_ptr;
-		++offset;
+		text_ptr++;
+		offset++;
 	} // while
 } // VGA_text
 
@@ -35,7 +37,7 @@ void VGA_box(int x1, int y1, int x2, int y2, short pixel_color)
 	for (row = y1; row <= y2; row++)
 		for (col = x1; col <= x2; ++col)
 		{
-			offset = (row << 9) + col;
+			offset = (row << 7) + col;
 			*(pixel_buffer + offset) = pixel_color; // compute halfword address, set pixel color
 		} // for col
 } // VGA_box
@@ -43,16 +45,18 @@ void VGA_box(int x1, int y1, int x2, int y2, short pixel_color)
 int main(void)
 {
 	/* create a message to be displayed on the VGA and LCD displays */
-	char text_top_row[50] = "Hello World/0";
-	char text_bottom_row[50] = "My Name is Foo! My Favorite Class is ECE181./0";
-
+	char text_top_row[50] = "Hello World\0";
+	char text_bottom_row[50] = "My Name is Foo! My Favorite Class is ECE181.\0";
 	/* output text message in the middle of the VGA monitor */
 	VGA_text (35, 29, text_top_row);
 	VGA_text (35, 30, text_bottom_row);
 
 //	Pixel color is in Red_Green_Blue format - 0x0001.1_000.011_1.1111 = 0x1878
-	VGA_box (1*4-2, 28*4, 79*4+1, 32*4, 0xF800); // Display Pixel X:0 to 319, 16-Bit RGB
+	VGA_box (1*4-2, 110*4, 79*4+1, 130*4, 0xF800); // Display Pixel X:0 to 319, 16-Bit RGB
 
+
+	
 	while(1);
+	
 	return 0;
 } // main
