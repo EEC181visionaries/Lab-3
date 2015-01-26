@@ -37,7 +37,7 @@ void VGA_box(int x1, int y1, int x2, int y2, short pixel_color)
 	for (row = y1; row <= y2; row++)
 		for (col = x1; col <= x2; ++col)
 		{
-			offset = (row << 7) + col;
+			offset = (row << 9) + col;
 			*(pixel_buffer + offset) = pixel_color; // compute halfword address, set pixel color
 		} // for col
 } // VGA_box
