@@ -20,6 +20,42 @@ void VGA_text(int x, int y, char * text_ptr)
 	} // while
 } // VGA_text
 
+void VGA_bounce(int x_start, int x_end, int y_start, int y_end, char * text_ptr)
+{
+	char *ptr_start;
+	int offset;
+	int y = (y_start + y_end)/2;
+	int x = (x_start + x_end)/2;
+	int x_move = 1;
+	int y_move = 1;
+	int i=0;
+	ptr_start = text_ptr;
+
+	// VGA char_buffer_slave location address - Base address is 0x04004000 in Qsys
+	volatile char * character_buffer = (char *) 0xC4004000;
+
+	while(1)
+	{
+		text_ptr = ptr_start;
+		if (x == x_start || x == x_end)
+			x_move = -x_move;
+		if (y == y_start || y == y_end)
+			y_move = -y_move;
+		x = x + x_move;
+		y = y + y_move;
+		offset = (y << 7) + x;
+		while ( *(text_ptr) )
+		{
+			*(character_buffer + offset) = *(text_ptr);
+			text_ptr++;
+			offset++;
+		} // while
+		for (i = 0; i< 10000; i++)
+		{
+		}
+	}	// while(1)
+}	// VGA_bounce
+
 // Function to Draw a filled rectangle o nthe VGA monitor
 void VGA_box(int x1, int y1, int x2, int y2, short pixel_color)
 {
@@ -64,20 +100,11 @@ int main(void)
 	// green box
 	VGA_box(120,100,200,140,0x07E0);
 
-
+	VGA_bounce(30,44,25,34,text_bouncing);
 	
 	while(1)
 	{
-		if (x == 44 || x == 30)
-			x_move = -x_move;
-		if (y == 35-1 || y == 25)
-			y_move = -y_move;
-		x = x + x_move;
-		y = y + y_move;
-		VGA_text (x, y, text_bouncing);
-		for (i = 0; i< 100000; i++)
-		{
-		}
+
 	}
 	
 	return 0;
