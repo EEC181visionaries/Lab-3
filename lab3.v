@@ -6,7 +6,11 @@ VGA_B, VGA_BLANK_N, VGA_CLK, VGA_G, VGA_HS, VGA_R, VGA_SYNC_N, VGA_VS,
 // DDR3 SDRAM
 HPS_DDR3_ADDR, HPS_DDR3_BA, HPS_DDR3_CAS_N, HPS_DDR3_CKE, HPS_DDR3_CK_N, HPS_DDR3_CK_P, HPS_DDR3_CS_N, HPS_DDR3_DM,
 HPS_DDR3_DQ, HPS_DDR3_DQS_N, HPS_DDR3_DQS_P, HPS_DDR3_ODT, HPS_DDR3_RAS_N, HPS_DDR3_RESET_N, HPS_DDR3_RZQ, HPS_DDR3_WE_N,
+LEDR, KEY, SW, HEX5, HEX4, HEX3, HEX2, HEX1, HEX0
 );
+
+// =========================
+// Input / Output declarations
 
 input CLOCK_50;
 input CLOCK2_50;
@@ -51,6 +55,26 @@ output HPS_DDR3_RESET_N;
 input HPS_DDR3_RZQ;
 output HPS_DDR3_WE_N;
 
+output [9:0] LEDR;
+input [3:0] KEY;
+input [9:0] SW;
+output [6:0] HEX5, HEX4, HEX3, HEX2, HEX1, HEX0;
+
+// ======================
+// Functional
+
+wire [23:0] hex2_hex0;
+wire [23:0] hex5_hex3;
+
+assign HEX0 = ~hex2_hex0[6:0];
+assign HEX1 = ~hex2_hex0[14:8];
+assign HEX2 = ~hex2_hex0[22:16];
+assign HEX3 = ~hex5_hex3[6:0];
+assign HEX4 = ~hex5_hex3[14:8];
+assign HEX5 = ~hex5_hex3[22:16];
+
+// =========================================================
+// System
 
 mysystem u0 (
 .system_ref_clk_clk (CLOCK_50),
@@ -94,7 +118,13 @@ mysystem u0 (
 .sdram_dq (DRAM_DQ),
 .sdram_dqm ({DRAM_UDQM,DRAM_LDQM}),
 .sdram_ras_n (DRAM_RAS_N),
-.sdram_we_n            (DRAM_WE_N),              //                  .we_n
+        .sdram_we_n              (DRAM_WE_N),              //                  .we_n
+        
+        .hex0_hex2_export        (hex2_hex0),        //         hex0_hex2.export
+        .hex3_hex5_export        (hex5_hex3),         //         hex3_hex5.export
+        .pushbuttons_export      (~KEY[3:0]),      //       pushbuttons.export
+        .switches_export         (SW),         //          switches.export
+        .leds_export             (LEDR)              //              leds.export
 
 );
 
