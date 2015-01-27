@@ -1,5 +1,24 @@
 #include <stdio.h>
 
+/* For Reference
+===========================
+volatile int * led = (int *) 0xFF200040; // red LED address
+	volatile int * switchptr = (int *) 0xFF200030; // SW slider switch address
+	volatile int * hex30 = (int *) 0xFF200020; // HEX3-0 address
+	volatile int * hex54 = (int *) 0xFF200010; // HEX5-4 address
+	volatile int * pb = (int *) 0xFF200000; // Push button address
+	int switch_value;
+	int btn_value;
+	int wait = 99999;
+	int h = 0b1110110;
+	int e = 0b1111001;
+	int l = 0b0111000;
+	int o = 0b0111111;
+	int u = 0b0111110;
+	int r = 0b1010000;
+	int d = 0b1011110;
+	===============
+	*/
 
 // Locations
 #define HEX2_0_ADDRESS 0xFF200000	// 0x00000000
