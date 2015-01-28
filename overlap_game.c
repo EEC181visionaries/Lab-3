@@ -32,6 +32,18 @@
 #define GREEN 0x07E0
 #define BLUE 0x001F
 
+#define ZERO 0b0111111
+#define ONE 0b0000110
+#define TWO 0b1011011
+#define THREE 0b1001111
+#define FOUR 0b1100110
+#define FIVE 0b1101101
+#define SIX 0b1111101
+#define SEVEN 0b0000111
+#define EIGHT 0b1111111
+#define NINE 0b1101111
+#define E 0b1111001
+
 
 // Function to send a string of text to the VGA monitor
 void VGA_text(int x, int y, char * text_ptr);
@@ -42,6 +54,8 @@ void VGA_bounce(int x_start, int x_end, int y_start, int y_end, char * text_ptr)
 void VGA_box(int x1, int y1, int x2, int y2, short pixel_color);
 
 void VGA_temp_box(int x1, int x2, int y1, int y2, short pixel_color);
+int overlap_check(int x1, int x2, int a1, int a2,int y1, int y2, int b1, int b2);
+void sendToHex(int num,volatile int *addr);
 
 // ==============================================================================
 // Main
@@ -56,6 +70,7 @@ int main(void)
 	volatile int * hex2_0 = (int *) HEX2_0_ADDRESS;
 	volatile int * hex5_3 = (int *) HEX5_3_ADDRESS;
 	volatile int * pushbuttons = (int *) PUSHBUTTON_ADDRESS;
+
 	int switches;
 	int buttons;
 	int x[3];	// 120/4
@@ -70,24 +85,27 @@ int main(void)
 	char text_stationary[50] = "Visionaries\0";
 	VGA_text (140/4, 120/4, text_stationary);
 	int times[3];
-
+	int test = 0;
+	int done[2] = {0,0};
+	int started[2] = {0,0};
+	int start[2] = {0,0};
+	
 
 
 	// background
+
 	VGA_box (0*4, 0*4, 80*4, 120*4, BACKGROUND_COLOR); // Display Pixel X:0 to 319, 16-Bit RGB
 
 // Game initialization
-	int x_start[3] = {0,rand()%(320-BOX_SIZE),rand()%(320-BOX_SIZE)};
+	int x_start[3] = {0,rand()%(60-BOX_SIZE),rand()%(60-BOX_SIZE)};
 	int y_start[3] = {0,rand()%(240-BOX_SIZE),rand()%(240-BOX_SIZE)};
 	// generate new numbers until non-overlap
-		while((x_start[3] > x_start[2] && x_start[3] < (x_start[2]+BOX_SIZE)) && (x_start[3]+BOX_SIZE > x_start[2] && x_start[3]+BOX_SIZE < (x_start[2]+BOX_SIZE)))
+		while(overlap_check(x_start[2],x_start[2]+BOX_SIZE,x_start[3],x_start[3]+BOX_SIZE,y_start[2],y_start[2]+BOX_SIZE,y_start[3],y_start[3]+BOX_SIZE))
 		{
 			x_start[3] = rand()%(320-BOX_SIZE);
-		}
-		while((y_start[3] > y_start[2] && y_start[3] < (y_start[2]+BOX_SIZE)) && (y_start[3]+BOX_SIZE > y_start[2] && y_start[3]+BOX_SIZE < (y_start[2]+BOX_SIZE)))
-		{
 			y_start[3] = rand()%(320-BOX_SIZE);
 		}
+
 	for (i = 0; i <3; i++)
 	{
 		x[i] = x_start[i];
@@ -103,18 +121,49 @@ int main(void)
 		switch(switches)
 		{
 		case 1:// 00000_00001
-			player = 2;
+			if (done[1] == 1)
+				player = 0;
+			else
+				player = 2;
 			break;
 		case 2://00000_00010
-			player = 1;
+			if (done[0] == 1)
+				player = 0;
+			else
+				player = 1;
 			break;
 		case 4://00000_00100
 			score1 = 0;
 			score2 = 0;
 			player = 0;
+			done[0] = 0;
+			done[1] = 0;
+			started[0] = 0;
+			started[1] = 0;
 			break;
 		default:
 			player = 0;
+		}
+		if (player == 1)
+		{
+			if (started == 0)
+			{
+				started[0] = 1;
+				x[player] = x_start[player];
+				y[player] = y_start[player];
+			}
+			
+//			sendToHex(,hex5_3);
+		}
+		if (player == 2)
+		{
+			if (started == 0)
+			{
+				started[1] = 1;
+				x[player] = x_start[player];
+				y[player] = y_start[player];
+			}
+//			sendToHex(,hex2_0);
 		}
 		if (player)
 		{
@@ -132,17 +181,22 @@ int main(void)
 				y[player]++;
 
 			VGA_temp_box(x[player],x[player]+BOX_SIZE,y[player],y[player]+BOX_SIZE,color[player]);
-			
-			
+
+			if (overlap_check(x[2],x[2]+BOX_SIZE,x[3],x[3]+BOX_SIZE,y[2],y[2]+BOX_SIZE,y[3],y[3]+BOX_SIZE))
+			{
+				done[player-1] = 1;
+				*led = 0b0101010101;
+			}
+			if (done[0] == 1 && done[1] == 1)
+			{
+				*led = 0b1111111111;
+			}
 			while(buttons)
 				buttons = *pushbuttons;	// wait until user releases buttons
 
-			if((x[3] > x[2] && x[3] < (x[2]+BOX_SIZE)) && (x[3]+BOX_SIZE > x[2] && x[3]+BOX_SIZE < (x[2]+BOX_SIZE)))
-			{
-				*led = player;
-			}
-		}
-	}
+
+		}	// if
+	}	// while
 	
 	return 0;
 } // main
@@ -267,3 +321,163 @@ void VGA_temp_box(int x1, int x2, int y1, int y2, short pixel_color)
 			*(pixel_buffer + offset) = pixel_color; // compute halfword address, set pixel color
 		} // for col
 }
+
+int overlap_check(int x1, int x2, int a1, int a2,int y1, int y2, int b1, int b2)
+{
+	int bad = 0;
+
+	// top left corner
+	if ((x1 > a1) && (x1 < a2))
+	{
+		if ((y1 > b1) && (y1 < b2))
+			bad = 1;
+	}
+
+	// top right corner
+	if ((x2 > a1) && (x2 < a2))
+	{
+		if ((y1 > b1) && (y1 < b2))
+			bad = 1;
+	}
+
+	// bottom left corner
+	if ((x1 > a1) && (x1 < a2))
+	{
+		if ((y2 > b1) && (y2 < b2))
+			bad = 1;
+	}
+
+	// bottom right corner
+	if ((x2 > a1) && (x2 < a2))
+	{
+		if ((y2 > b1) && (y2 < b2))
+			bad = 1;
+	}
+
+	return bad;
+}
+
+void sendToHex(int num, volatile int *addr)
+{
+	volatile int *mod_addr;
+	mod_addr = addr;
+
+	switch((num/100)%10)
+	{
+	case 0:
+		*mod_addr = ZERO;
+		break;
+	case 1:
+		*mod_addr = ONE;
+		break;
+	case 2:
+		*mod_addr = TWO;
+		break;
+	case 3:
+		*mod_addr = THREE;
+		break;
+	case 4:
+		*mod_addr = FOUR;
+		break;
+	case 5:
+		*mod_addr = FIVE;
+		break;
+	case 6:
+		*mod_addr = SIX;
+		break;
+	case 7:
+		*mod_addr = SEVEN;
+		break;
+	case 8:
+		*mod_addr = EIGHT;
+		break;
+	case 9:
+		*mod_addr = NINE;
+		break;
+		default:
+			*mod_addr += E;
+	}
+
+	*mod_addr = *mod_addr * 256;
+
+	switch((num/10)%10)
+	{
+	case 0:
+		*mod_addr += ZERO;
+		break;
+	case 1:
+		*mod_addr += ONE;
+		break;
+	case 2:
+		*mod_addr += TWO;
+		break;
+	case 3:
+		*mod_addr += THREE;
+		break;
+	case 4:
+		*mod_addr += FOUR;
+		break;
+	case 5:
+		*mod_addr += FIVE;
+		break;
+	case 6:
+		*mod_addr += SIX;
+		break;
+	case 7:
+		*mod_addr += SEVEN;
+		break;
+	case 8:
+		*mod_addr += EIGHT;
+		break;
+	case 9:
+		*mod_addr += NINE;
+		break;
+		default:
+			*mod_addr += E;
+	}
+
+	*mod_addr = *mod_addr * 256;
+
+	switch(num%10)
+	{
+	case 0:
+		*mod_addr += ZERO;
+		break;
+	case 1:
+		*mod_addr += ONE;
+		break;
+	case 2:
+		*mod_addr += TWO;
+		break;
+	case 3:
+		*mod_addr += THREE;
+		break;
+	case 4:
+		*mod_addr += FOUR;
+		break;
+	case 5:
+		*mod_addr += FIVE;
+		break;
+	case 6:
+		*mod_addr += SIX;
+		break;
+	case 7:
+		*mod_addr += SEVEN;
+		break;
+	case 8:
+		*mod_addr += EIGHT;
+		break;
+	case 9:
+		*mod_addr += NINE;
+		break;
+		default:
+			*mod_addr += E;
+	}
+
+
+	
+	
+
+}
+
+
