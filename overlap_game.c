@@ -24,7 +24,7 @@
 #define PUSHBUTTON_ADDRESS 0xFF200040	// 0x00000040
 #define CHAR_BUFFER_SLAVE_ADDRESS 0xC4004000	// 0x04004000
 
-#define BOX_SIZE 30
+#define BOX_SIZE 40
 
 //	Pixel color is in Red_Green_Blue format - 0x0001.1_000.011_1.1111 = 0x1878
 #define BACKGROUND_COLOR 0xF800
@@ -90,6 +90,10 @@ int main(void)
 	int started[2] = {0,0};
 	int start[2] = {0,0};
 	
+	int msec1 = 0;
+	int msec2 = 0;
+	clock_t start1, diff1;
+	clock_t start2, diff2;
 
 
 	// background
@@ -97,13 +101,13 @@ int main(void)
 	VGA_box (0*4, 0*4, 80*4, 120*4, BACKGROUND_COLOR); // Display Pixel X:0 to 319, 16-Bit RGB
 
 // Game initialization
-	int x_start[3] = {0,rand()%(60-BOX_SIZE),rand()%(60-BOX_SIZE)};
+	int x_start[3] = {0,rand()%(320-BOX_SIZE),rand()%(320-BOX_SIZE)};
 	int y_start[3] = {0,rand()%(240-BOX_SIZE),rand()%(240-BOX_SIZE)};
 	// generate new numbers until non-overlap
-		while(overlap_check(x_start[2],x_start[2]+BOX_SIZE,x_start[3],x_start[3]+BOX_SIZE,y_start[2],y_start[2]+BOX_SIZE,y_start[3],y_start[3]+BOX_SIZE))
+		while(x_start[1] == x_start[2] && y_start[1] == y_start[2])
 		{
-			x_start[3] = rand()%(320-BOX_SIZE);
-			y_start[3] = rand()%(320-BOX_SIZE);
+			x_start[2] = rand()%(320-BOX_SIZE);
+			y_start[2] = rand()%(240-BOX_SIZE);
 		}
 
 	for (i = 0; i <3; i++)
@@ -146,24 +150,29 @@ int main(void)
 		}
 		if (player == 1)
 		{
-			if (started == 0)
+			if (started[0] == 0)
 			{
 				started[0] = 1;
 				x[player] = x_start[player];
 				y[player] = y_start[player];
+				start1 = clock();
 			}
-			
-//			sendToHex(,hex5_3);
+			diff1 = clock() - start1;
+			msec1 = diff1 * 1000 / CLOCKS_PER_SEC;
+			sendToHex(msec1/200,hex5_3);
 		}
 		if (player == 2)
 		{
-			if (started == 0)
+			if (started[1] == 0)
 			{
 				started[1] = 1;
 				x[player] = x_start[player];
 				y[player] = y_start[player];
+				start2 = clock();
 			}
-//			sendToHex(,hex2_0);
+			diff2 = clock() - start2;
+			msec2 = diff2 * 1000 / CLOCKS_PER_SEC;
+			sendToHex(msec2/200,hex2_0);
 		}
 		if (player)
 		{
@@ -182,7 +191,7 @@ int main(void)
 
 			VGA_temp_box(x[player],x[player]+BOX_SIZE,y[player],y[player]+BOX_SIZE,color[player]);
 
-			if (overlap_check(x[2],x[2]+BOX_SIZE,x[3],x[3]+BOX_SIZE,y[2],y[2]+BOX_SIZE,y[3],y[3]+BOX_SIZE))
+			if (x_start[1] == x_start[2] && y_start[1] == y_start[2])
 			{
 				done[player-1] = 1;
 				*led = 0b0101010101;
